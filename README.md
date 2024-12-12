@@ -1,0 +1,2 @@
+# Solomon
+A chess engine
