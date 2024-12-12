@@ -34,6 +34,12 @@ No installation required! The project uses CDN-hosted libraries:
    ```
    Then visit `http://localhost:8000`
 
+   If you have Node.js installed:
+      Install a simple server: npm install -g serve
+      Navigate to your project folder
+      Run: serve
+      Open your browser to the URL it provides
+
 ## 🛠️ Development Roadmap
 
 - [x] Basic board setup and move validation
@@ -67,7 +73,6 @@ This project makes use of the following open-source libraries:
 
 ## 📧 Contact
 
-Your Name - [jorge1289@berkeley.edu](mailto:your-email@example.com)
+Jorge Emanuel Nunez - [jorge1289@berkeley.edu](mailto:your-email@example.com)
 
-Project Link: [https://github.com/jorge1289/Solomon](https://github.com/jorge1289/Solomon)
-```
+[https://github.com/jorge1289/Solomon](https://github.com/jorge1289/Solomon)```
