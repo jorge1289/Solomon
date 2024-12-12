@@ -15,26 +15,31 @@
 <html>
 <head>
     <title>Chess Engine</title>
-    <!-- Include chessboard.js dependencies -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
-    <!-- Include our custom CSS -->
     <link rel="stylesheet" href="css/styles.css">
-    <!-- Include external libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 </head>
 <body>
-    <div class="board-wrapper">
-        <div id="board"></div>
-        <div id="game-over"></div>
+    <div class="game-container">
+        <div class="side-controls">
+            <div class="color-picker">
+                <h3>Play as:</h3>
+                <button id="playAsWhite" class="color-btn active">White</button>
+                <button id="playAsBlack" class="color-btn">Black</button>
+            </div>
+        </div>
+        <div class="board-wrapper">
+            <div id="board"></div>
+            <div id="game-over"></div>
+        </div>
     </div>
     <div class="status" id="status"></div>
     <div class="controls">
         <button id="playAgain">Play Again</button>
     </div>
 
-    <!-- Include our game logic -->
     <script src="js/game.js"></script>
 </body>
 </html>

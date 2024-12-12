@@ -2,11 +2,13 @@
 var game = new Chess();
 var $status = $('#status');
 var $gameOver = $('#game-over');
+var playerColor = 'w';
 
 // Configure the board with piece theme
 var config = {
     position: 'start',
     draggable: true,
+    orientation: 'white',
     pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
     onDrop: handleMove
 };
@@ -16,6 +18,12 @@ var board = Chessboard('board', config);
 
 // Handle piece movement
 function handleMove(source, target) {
+    // Only allow moves if it's player's turn
+    if ((game.turn() === 'w' && playerColor === 'b') ||
+        (game.turn() === 'b' && playerColor === 'w')) {
+        return 'snapback';
+    }
+
     // Try to make the move
     var move = game.move({
         from: source,
@@ -103,10 +111,14 @@ function showGameOver(message) {
     `).fadeIn();
 }
 
-// Your engine logic will go here
+// Make engine move
 function makeEngineMove() {
-    // This is where you'll implement your chess engine logic
-    // For now, just make a random legal move
+    // Only make move if it's engine's turn
+    if ((game.turn() === 'w' && playerColor === 'w') ||
+        (game.turn() === 'b' && playerColor === 'b')) {
+        return;
+    }
+
     var moves = game.moves();
     
     if (moves.length > 0) {
@@ -118,13 +130,39 @@ function makeEngineMove() {
     }
 }
 
-// Play Again button handler
-$('#playAgain').on('click', function() {
+// Start new game
+function startNewGame() {
     game.reset();
     board.start();
     $gameOver.fadeOut();
+    
+    // If playing as black, make engine move first
+    if (playerColor === 'b') {
+        makeEngineMove();
+    }
+    
     updateStatus();
+}
+
+// Color selection handlers
+$('#playAsWhite').on('click', function() {
+    playerColor = 'w';
+    board.orientation('white');
+    $('.color-btn').removeClass('active');
+    $(this).addClass('active');
+    startNewGame();
 });
+
+$('#playAsBlack').on('click', function() {
+    playerColor = 'b';
+    board.orientation('black');
+    $('.color-btn').removeClass('active');
+    $(this).addClass('active');
+    startNewGame();
+});
+
+// Play Again button handler
+$('#playAgain').on('click', startNewGame);
 
 // Make the board responsive
 $(window).resize(board.resize);
