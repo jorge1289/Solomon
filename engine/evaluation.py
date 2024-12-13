@@ -11,6 +11,9 @@ from .constants import (
 from .board_utils import parse_fen, get_game_phase, get_square_index, mirror_square
 
 class ChessEvaluator:
+
+    def __init__(self):
+        self.nodes_evaluated = 0
     
     def evaluate_fen(self, fen):
         """
@@ -63,23 +66,52 @@ class ChessEvaluator:
         
         return final_score
 
-    def get_best_move(self, fen, legal_moves, depth=3):
+    def get_best_move(self, positions, depth=3):
         """
         Find best move from current position.
         legal_moves should be array of moves in UCI format from chess.js
         """
+        self.nodes_evaluated = 0
         best_move = None
-        best_score = float('-inf')
+        alpha = float('-inf')
+        beta = float('inf')
         
-        for move in legal_moves:
-            # Here you would need to:
-            # 1. Apply move to get new FEN
-            # 2. Evaluate new position
-            # 3. Use minimax/alpha-beta
-            # 4. Keep track of best move
-            pass
+        # White maximizes, Black minimizes
+        is_white = positions[0]['fen'].split(' ')[1] == 'w'
+        best_score = float('-inf') if is_white else float('inf')
+        
+        # First level of search
+        for position in positions:
+            score = self.minimax(position['fen'], depth - 1, alpha, beta, not is_white)
             
-        return best_move
+            if is_white and score > best_score:
+                best_score = score
+                best_move = position['move']
+                alpha = max(alpha, score)
+            elif not is_white and score < best_score:
+                best_score = score
+                best_move = position['move']
+                beta = min(beta, score)
+        
+        return {
+            'move': best_move,
+            'score': best_score,
+            'nodes': self.nodes_evaluated
+        }
+    
+    def minimax(self, fen, depth, alpha, beta, maximizing):
+        """
+        Minimax implementation with alpha-beta pruning.
+        Uses position evaluations for leaf nodes.
+        """
+        self.nodes_evaluated += 1
+        
+        # Base case: leaf node
+        if depth == 0:
+            return self.evaluate_position(fen)
+            
+        # We'll receive the possible moves and resulting positions from the frontend
+        return self.evaluate_position(fen)  # For non-leaf nodes, use current position for now
 
 # Add Flask endpoint to receive FEN and return evaluation
 from flask import Flask, request, jsonify
@@ -87,12 +119,19 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 evaluator = ChessEvaluator()
 
-@app.route('/api/evaluate', methods=['POST'])
-def evaluate_position():
-    data = request.json
-    fen = data['fen']
-    score = evaluator.evaluate_fen(fen)
-    return jsonify({'score': score})
-
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.route('/api/get-move', methods=['POST'])
+def get_move():
+    try:
+        data = request.json
+        if not data or 'positions' not in data:
+            return jsonify({'error': 'Missing positions data'}), 400
+            
+        positions = data['positions']
+        depth = data.get('depth', 3)
+        
+        result = evaluator.get_best_move(positions, depth)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

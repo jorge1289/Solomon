@@ -131,64 +131,76 @@ async function makeEngineMove() {
 
     updateEngineStatus(true);
     try {
-        // Get all legal moves
-        const moves = game.moves({ verbose: true });
-        let bestMove = null;
-        let bestScore = game.turn() === 'w' ? -Infinity : Infinity;
+        // Generate all possible positions for each legal move
+        const positions = generatePositions(game, 3); // depth = 3
 
-        // Evaluate each move
-        for (const move of moves) {
-            // Make the move
+        const response = await fetch(`${API_URL}/api/get-move`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                positions: positions,
+                depth: 3
+            })
+        });
+        
+        const { move, score, nodes } = await response.json();
+        
+        if (move) {
             game.move(move);
-            
-            // Get position evaluation
-            const response = await fetch(`${API_URL}/api/evaluate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ fen: game.fen() })
-            });
-
-            const { score } = await response.json();
-            
-            // Undo the move
-            game.undo();
-            
-            // Update best move
-            if (game.turn() === 'w') {
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestMove = move;
-                }
-            } else {
-                if (score < bestScore) {
-                    bestScore = score;
-                    bestMove = move;
-                }
-            }
-        }
-
-        // Make the best move
-        if (bestMove) {
-            game.move(bestMove);
             board.position(game.fen());
             updateStatus();
+            console.log(`Evaluated ${nodes} positions, best move score: ${score}`);
         }
+
     } catch (error) {
         console.error('Error in engine move:', error);
         // Fallback to random move if evaluation fails
         var moves = game.moves();
         if (moves.length > 0) {
-            var randomIdx = Math.floor(Math.random() * moves.length);
-            var move = moves[randomIdx];
-            game.move(move);
+            const randomMove = moves[Math.floor(Math.random() * moves.length)];
+            game.move(randomMove);
             board.position(game.fen());
             updateStatus();
         }
     } finally {
         updateEngineStatus(false);
     }
+}
+
+function generatePositions(game, depth) {
+    if (depth === 0) {
+        return [{
+            move: '',
+            fen: game.fen()
+        }];
+    }
+
+    const positions = [];
+    const moves = game.moves({ verbose: true });
+
+    for (const move of moves) {
+        // Make the move
+        game.move(move);
+        
+        // Store the position
+        positions.push({
+            move: move.from + move.to + (move.promotion || ''),
+            fen: game.fen()
+        });
+
+        if (depth > 1 && !game.game_over()) {
+            // Recursively get positions for subsequent moves
+            const childPositions = generatePositions(game, depth - 1);
+            positions.push(...childPositions);
+        }
+
+        // Undo the move
+        game.undo();
+    }
+
+    return positions;
 }
 
 // Start new game
