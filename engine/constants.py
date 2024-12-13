@@ -102,7 +102,11 @@ EG_ROOK_TABLE = [
     -9,  2,  3, -1, -5, -13,   4, -20,
 ]
 
+<<<<<<< HEAD
 MG_QUEEN_TABLE = [
+=======
+EG_QUEEN_TABLE = [
+>>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
     -28,   0,  29,  12,  59,  44,  43,  45,
     -24, -39,  -5,   1, -16,  57,  28,  54,
     -13, -17,   7,   8,  29,  56,  47,  57,

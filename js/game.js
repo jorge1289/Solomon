@@ -8,8 +8,13 @@ var $engineStatus = $('#engine-status');
 const API_URL = 'http://localhost:5001';
 =======
 var currentGameState = game.fen();
+<<<<<<< HEAD
 
 >>>>>>> 6c9503b (Added realtime move history panel with highlighting (#20))
+=======
+var $engineStatus = $('#engine-status');
+const API_URL = 'http://localhost:5001';
+>>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
 // Configure the board with piece theme
 var config = {
     position: 'start',
@@ -92,7 +97,6 @@ function handleMove(source, target) {
         window.setTimeout(makeEngineMove, 250);
     }
 }
-
 
 /**
  * @description
@@ -206,6 +210,9 @@ function showGameOver(message) {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
 // Add this function
 function updateEngineStatus(isThinking) {
     if (isThinking) {
@@ -214,6 +221,10 @@ function updateEngineStatus(isThinking) {
         $engineStatus.hide();
     }
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
 class ChessEngineInterface {
     constructor(apiUrl) {
         this.apiUrl = apiUrl;
@@ -296,18 +307,21 @@ class ChessEngineInterface {
 // Usage in your game code
 const engine = new ChessEngineInterface(API_URL);
 
+<<<<<<< HEAD
 async function makeEngineMove() {
     // Debug logging
     console.log('Turn:', game.turn(), 'Player Color:', playerColor);
     
 =======
+=======
+>>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
 /**
  * @description
  * Makes a move for the engine only on its turn.
- * The engine will randomly select one of the available move and apply it to the game.
+ * The engine will make a move following our algorithm.
  * 
  * This function checks if it is engine's turn based on the current turn and the player's color.
- * If it's the engine's turn, it selects a random move from the list of valid moves and executes it.
+ * If it's the engine's turn, it determines a move using the provided chess engine.
  * Then, it calls the `updateStatus` function, updating the board position and game status.
  * 
  * @function
@@ -315,9 +329,16 @@ async function makeEngineMove() {
  * @see {@link updateStatus}()
 */
 
+<<<<<<< HEAD
 function makeEngineMove() {
     // Only make move if it's engine's turn
 >>>>>>> f49d24d (Add JSDocs for utility functions (#18))
+=======
+async function makeEngineMove() {
+    // Debug logging
+    console.log('Turn:', game.turn(), 'Player Color:', playerColor);
+    
+>>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
     if ((game.turn() === 'w' && playerColor === 'w') ||
         (game.turn() === 'b' && playerColor === 'b')) {
         console.log('Not engine turn, returning');
@@ -327,6 +348,9 @@ function makeEngineMove() {
     updateEngineStatus(true);
     
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
     try {
         const result = await engine.makeMove(game, 3);
         console.log('Engine returned move:', result);
@@ -357,6 +381,7 @@ function makeEngineMove() {
         console.error('Error making engine move:', error);
     } finally {
         updateEngineStatus(false);
+<<<<<<< HEAD
 =======
     if (moves.length > 0) {
         var randomIdx = Math.floor(Math.random() * moves.length);
@@ -366,6 +391,8 @@ function makeEngineMove() {
         updateStatus();
         showHistory();
 >>>>>>> 6c9503b (Added realtime move history panel with highlighting (#20))
+=======
+>>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
     }
 }
 
