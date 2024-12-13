@@ -3,7 +3,8 @@ var game = new Chess();
 var $status = $('#status');
 var $gameOver = $('#game-over');
 var playerColor = 'w';
-
+var $engineStatus = $('#engine-status');
+const API_URL = 'http://localhost:5001';
 // Configure the board with piece theme
 var config = {
     position: 'start',
@@ -111,22 +112,82 @@ function showGameOver(message) {
     `).fadeIn();
 }
 
+// Add this function
+function updateEngineStatus(isThinking) {
+    if (isThinking) {
+        $engineStatus.html('Engine is thinking...').show();
+    } else {
+        $engineStatus.hide();
+    }
+}
+
 // Make engine move
-function makeEngineMove() {
+async function makeEngineMove() {
     // Only make move if it's engine's turn
     if ((game.turn() === 'w' && playerColor === 'w') ||
         (game.turn() === 'b' && playerColor === 'b')) {
         return;
     }
 
-    var moves = game.moves();
-    
-    if (moves.length > 0) {
-        var randomIdx = Math.floor(Math.random() * moves.length);
-        var move = moves[randomIdx];
-        game.move(move);
-        board.position(game.fen());
-        updateStatus();
+    updateEngineStatus(true);
+    try {
+        // Get all legal moves
+        const moves = game.moves({ verbose: true });
+        let bestMove = null;
+        let bestScore = game.turn() === 'w' ? -Infinity : Infinity;
+
+        // Evaluate each move
+        for (const move of moves) {
+            // Make the move
+            game.move(move);
+            
+            // Get position evaluation
+            const response = await fetch(`${API_URL}/api/evaluate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ fen: game.fen() })
+            });
+
+            const { score } = await response.json();
+            
+            // Undo the move
+            game.undo();
+            
+            // Update best move
+            if (game.turn() === 'w') {
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
+            } else {
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
+            }
+        }
+
+        // Make the best move
+        if (bestMove) {
+            game.move(bestMove);
+            board.position(game.fen());
+            updateStatus();
+        }
+    } catch (error) {
+        console.error('Error in engine move:', error);
+        // Fallback to random move if evaluation fails
+        var moves = game.moves();
+        if (moves.length > 0) {
+            var randomIdx = Math.floor(Math.random() * moves.length);
+            var move = moves[randomIdx];
+            game.move(move);
+            board.position(game.fen());
+            updateStatus();
+        }
+    } finally {
+        updateEngineStatus(false);
     }
 }
 

@@ -130,3 +130,9 @@ button:hover {
         margin-bottom: 10px;
     }
 }
+
+#engine-status {
+    margin-top: 10px;
+    color: #666;
+    font-style: italic;
+}
