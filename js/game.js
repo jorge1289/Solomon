@@ -352,33 +352,39 @@ async function makeEngineMove() {
 =======
 >>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
     try {
-        const result = await engine.makeMove(game, 3);
-        console.log('Engine returned move:', result);
+        // Generate all possible positions for each legal move
+        const positions = generatePositions(game, 3); // depth = 3
+
+        const response = await fetch(`${API_URL}/api/get-move`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                positions: positions,
+                depth: 3
+            })
+        });
         
-        if (result && result.move) {
-            // Convert the move string to an object
-            const move = {
-                from: result.move.substring(0, 2),
-                to: result.move.substring(2, 4),
-                promotion: result.move.length > 4 ? result.move.substring(4, 5) : undefined
-            };
-            
-            console.log('Attempting move:', move);
-            
-            // Try to make the move
-            const madeMove = game.move(move);
-            console.log('Move result:', madeMove);
-            
-            if (madeMove) {
-                board.position(game.fen());
-                updateStatus();
-                console.log(`Engine moved: ${result.move}, evaluated ${result.nodes} positions, score: ${result.score}`);
-            } else {
-                console.error('Invalid move:', move);
-            }
+        const { move, score, nodes } = await response.json();
+        
+        if (move) {
+            game.move(move);
+            board.position(game.fen());
+            updateStatus();
+            console.log(`Evaluated ${nodes} positions, best move score: ${score}`);
         }
+
     } catch (error) {
-        console.error('Error making engine move:', error);
+        console.error('Error in engine move:', error);
+        // Fallback to random move if evaluation fails
+        var moves = game.moves();
+        if (moves.length > 0) {
+            const randomMove = moves[Math.floor(Math.random() * moves.length)];
+            game.move(randomMove);
+            board.position(game.fen());
+            updateStatus();
+        }
     } finally {
         updateEngineStatus(false);
 <<<<<<< HEAD
@@ -394,6 +400,40 @@ async function makeEngineMove() {
 =======
 >>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
     }
+}
+
+function generatePositions(game, depth) {
+    if (depth === 0) {
+        return [{
+            move: '',
+            fen: game.fen()
+        }];
+    }
+
+    const positions = [];
+    const moves = game.moves({ verbose: true });
+
+    for (const move of moves) {
+        // Make the move
+        game.move(move);
+        
+        // Store the position
+        positions.push({
+            move: move.from + move.to + (move.promotion || ''),
+            fen: game.fen()
+        });
+
+        if (depth > 1 && !game.game_over()) {
+            // Recursively get positions for subsequent moves
+            const childPositions = generatePositions(game, depth - 1);
+            positions.push(...childPositions);
+        }
+
+        // Undo the move
+        game.undo();
+    }
+
+    return positions;
 }
 
 /**
