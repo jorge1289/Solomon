@@ -73,12 +73,23 @@
 #history .move {
     padding: 4px 6px;
     border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    display: block;
+    text-align: left;
+    margin-bottom: 5px;
+}
+
+#history .move:hover {
+    background-color: #f0f0f0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 #history .move.current-move {
     background-color: #4CAF50;
-    color: black;
+    color: rgb(255, 255, 255);
     font-weight: bold;
+    border-color: #45a049;
 }
 
 /* Game over overlay */
