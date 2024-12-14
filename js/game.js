@@ -127,6 +127,7 @@ function makeEngineMove() {
         game.move(move);
         board.position(game.fen());
         updateStatus();
+        showHistory();
     }
 }
 
@@ -134,6 +135,7 @@ function makeEngineMove() {
 function startNewGame() {
     game.reset();
     board.start();
+    $('#history').empty();
     $gameOver.fadeOut();
     
     // If playing as black, make engine move first
@@ -142,6 +144,35 @@ function startNewGame() {
     }
     
     updateStatus();
+    showHistory();
+}
+
+// Show move history
+function showHistory() {
+    let autoScroll = true;
+    const history = game.history();
+    const $history = $('#history');
+    $history.empty();
+
+    // Show each move on the history panel
+    history.forEach((move, index) => {
+        const $move = $(`<div class="move">${index + 1}. ${move}</div>`);
+
+        if (index === history.length - 1) {
+            $move.addClass('current-move');
+        }
+
+        $history.append($move);
+    });
+
+    // Scroll to the last move
+    if (autoScroll) {
+        const lastMove = $history.children().last()[0];
+        if (lastMove) {
+            lastMove.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+    }
+
 }
 
 // Color selection handlers

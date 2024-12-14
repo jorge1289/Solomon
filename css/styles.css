@@ -52,6 +52,35 @@
     border-color: #45a049;
 }
 
+/* Move History layout */
+.move-side {
+    width: 150px;
+    display: flex;
+    flex-direction: column;
+}
+
+.move-container {
+    height: 450px;
+    overflow-y: auto;
+}
+
+#history {
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+}
+
+#history .move {
+    padding: 4px 6px;
+    border-radius: 4px;
+}
+
+#history .move.current-move {
+    background-color: #4CAF50;
+    color: black;
+    font-weight: bold;
+}
+
 /* Game over overlay */
 #game-over {
     display: none;
