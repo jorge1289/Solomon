@@ -3,8 +3,13 @@ var game = new Chess();
 var $status = $('#status');
 var $gameOver = $('#game-over');
 var playerColor = 'w';
+<<<<<<< HEAD
 var $engineStatus = $('#engine-status');
 const API_URL = 'http://localhost:5001';
+=======
+var currentGameState = game.fen();
+
+>>>>>>> 6c9503b (Added realtime move history panel with highlighting (#20))
 // Configure the board with piece theme
 var config = {
     position: 'start',
@@ -290,6 +295,7 @@ function makeEngineMove() {
 
     updateEngineStatus(true);
     
+<<<<<<< HEAD
     try {
         const result = await engine.makeMove(game, 3);
         console.log('Engine returned move:', result);
@@ -320,6 +326,15 @@ function makeEngineMove() {
         console.error('Error making engine move:', error);
     } finally {
         updateEngineStatus(false);
+=======
+    if (moves.length > 0) {
+        var randomIdx = Math.floor(Math.random() * moves.length);
+        var move = moves[randomIdx];
+        game.move(move);
+        board.position(game.fen());
+        updateStatus();
+        showHistory();
+>>>>>>> 6c9503b (Added realtime move history panel with highlighting (#20))
     }
 }
 
@@ -340,6 +355,7 @@ function makeEngineMove() {
 function startNewGame() {
     game.reset();
     board.start();
+    $('#history').empty();
     $gameOver.fadeOut();
     
     // If playing as black, make engine move first
@@ -348,6 +364,51 @@ function startNewGame() {
     }
     
     updateStatus();
+    showHistory();
+}
+
+// Show move history
+function showHistory() {
+    let autoScroll = true;
+    const history = game.history();
+    const $history = $('#history');
+    $history.empty();
+
+    // Show each move on the history panel
+    history.forEach((move, index) => {
+        const $move = $(`<div class="move">${index + 1}. ${move}</div>`);
+
+        if (index === history.length - 1) {
+            $move.addClass('current-move');
+        }
+
+        $move.on('click', function() {
+            showMove(index);
+        });
+        
+        $history.append($move);
+    });
+
+    // Scroll to the last move
+    if (autoScroll) {
+        const lastMove = $history.children().last()[0];
+        if (lastMove) {
+            lastMove.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+    }
+
+}
+
+// Change board state at specific move
+function showMove(index) {
+    const history = game.history({ verbose: true });
+    const tempGame = new Chess();
+
+    for (let i = 0; i <= index; i++) {
+        tempGame.move(history[i]);
+    }
+
+    board.position(tempGame.fen());
 }
 
 // Color selection handlers
