@@ -11,7 +11,8 @@ var config = {
     draggable: true,
     orientation: 'white',
     pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
-    onDrop: handleMove
+    onDrop: handleMove,
+    onDragStart: handleDragStart 
 };
 
 // Initialize the board with the config
@@ -34,6 +35,7 @@ var board = Chessboard('board', config);
  * @see {@link https://github.com/jhlywa/chess.js/blob/master/README.md#api} <br>
  * @see {@link https://chessboardjs.com/examples#5000}
 */
+
 function handleMove(source, target) {
     // Only allow moves if it's player's turn
     if ((game.turn() === 'w' && playerColor === 'b') ||
@@ -53,10 +55,42 @@ function handleMove(source, target) {
 
     updateStatus();
 
+    
+
     // After player moves, call your engine
     if (!game.game_over()) {
         window.setTimeout(makeEngineMove, 250);
     }
+}
+
+function handleDragStart(source, piece, position, orientation) {
+    // Example: Prevent dragging opponent's pieces
+    removeHighlights();
+    if ((game.turn() === 'w' && piece.startsWith('b')) ||
+        (game.turn() === 'b' && piece.startsWith('w'))) {
+        return false;
+    }
+    
+    // Log the selected piece and its position
+    console.log(`Selected piece: ${piece} on square: ${source}`);
+    console.log("possible moves :",game.moves()); // oposite player's move
+    var validMoves = game.moves({ square: source, verbose: true });
+    console.log(validMoves);
+    space=[];
+    validMoves.map((v)=>{
+        space.push(v.to)
+    })
+
+    space.forEach((s)=>{
+        $(`#board .square-${s}`).addClass('highlight')
+    })
+    console.log(space);
+
+
+
+    
+
+    
 }
 
 /**
@@ -151,6 +185,7 @@ function highlightCheck() {
  * @see {@link updateStatus}()
 */
 function removeHighlights() {
+    $('#board .square-55d63').removeClass('highlight');
     $('#board .square-55d63').removeClass('in-check');
 }
 
