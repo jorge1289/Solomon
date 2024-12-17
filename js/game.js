@@ -28,6 +28,32 @@ var config = {
 // Initialize the board with the config
 var board = Chessboard('board', config);
 
+// Function to highlight possible next positions for the selected piece. 
+function selectedHighlight(source, piece) {
+    // Clear previous highlights
+    removeHighlights();
+
+    // Prevent highlighting for opponent's pieces
+    if ((game.turn() === 'w' && piece.startsWith('b')) ||
+        (game.turn() === 'b' && piece.startsWith('w'))) {
+        return false;
+    }
+    
+    // Get valid moves
+    var validMoves = game.moves({ square: source, verbose: true });
+    
+    // Apply highlights
+    validMoves.forEach((move) => {
+        const $square = $(`#board .square-${move.to}`);
+        $square.addClass('highlight');
+        
+        // Add special class for squares with pieces
+        if (move.captured || game.get(move.to)) {
+            $square.addClass('has-piece');
+        }
+    });
+}
+
 /**
  * @param {string} source The source square of the move in algebraic notation
  * @param {string} target The target square of the move in algebraic notation
@@ -45,32 +71,6 @@ var board = Chessboard('board', config);
  * @see {@link https://github.com/jhlywa/chess.js/blob/master/README.md#api} <br>
  * @see {@link https://chessboardjs.com/examples#5000}
 */
-
-// Function to highlight possible next positions for the selected piece. 
-function selectedHighlight(source, piece) {
-    // Example: Prevent dragging opponent's pieces
-    removeHighlights();
-    if ((game.turn() === 'w' && piece.startsWith('b')) ||
-        (game.turn() === 'b' && piece.startsWith('w'))) {
-        return false;
-    }
-    
-    // Log the selected piece and its position
-    console.log(`Selected piece: ${piece} on square: ${source}`);
-    console.log("possible moves :",game.moves()); // oposite player's move
-    var validMoves = game.moves({ square: source, verbose: true });
-    console.log(validMoves);
-    space=[];
-    validMoves.map((v)=>{
-        space.push(v.to)
-    })
-
-    space.forEach((s)=>{
-        $(`#board .square-${s}`).addClass('highlight')
-    })
-    console.log(space);
-
-}
 function handleMove(source, target) {
     // Only allow moves if it's player's turn
     if ((game.turn() === 'w' && playerColor === 'b') ||
@@ -223,10 +223,14 @@ function updateEngineStatus(isThinking) {
 }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
 =======
+=======
+
+>>>>>>> 641c919 (rebased and added all changes from main)
 class ChessEngineInterface {
     constructor(apiUrl) {
         this.apiUrl = apiUrl;
@@ -309,6 +313,7 @@ class ChessEngineInterface {
 // Usage in your game code
 const engine = new ChessEngineInterface(API_URL);
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 >>>>>>> b412ad7 (added evaluation function, started a good basis for a proper engine. currently does not generate best moves. As well as added a flask api in order to have my engine interact with the front-end)
 class ChessEngineInterface {
@@ -425,6 +430,8 @@ function makeEngineMove() {
 =======
 >>>>>>> 3e0d7e3 (added evaluation function, started a good basis for a proper engine. currently does not generate best moves. As well as added a flask api in order to have my engine interact with the front-end)
 >>>>>>> b412ad7 (added evaluation function, started a good basis for a proper engine. currently does not generate best moves. As well as added a flask api in order to have my engine interact with the front-end)
+=======
+>>>>>>> 641c919 (rebased and added all changes from main)
 async function makeEngineMove() {
     // Debug logging
     console.log('Turn:', game.turn(), 'Player Color:', playerColor);
@@ -463,6 +470,7 @@ async function makeEngineMove() {
             if (madeMove) {
                 board.position(game.fen());
                 updateStatus();
+                showHistory(); 
                 console.log(`Engine moved: ${result.move}, evaluated ${result.nodes} positions, score: ${result.score}`);
             } else {
                 console.error('Invalid move:', move);
@@ -487,58 +495,7 @@ async function makeEngineMove() {
     }
 }
 
-<<<<<<< HEAD
-function generatePositions(game, depth) {
-    if (depth === 0) {
-        return [{
-            move: '',
-            fen: game.fen()
-        }];
-    }
-
-    const positions = [];
-    const moves = game.moves({ verbose: true });
-
-    for (const move of moves) {
-        // Make the move
-        game.move(move);
-        
-        // Store the position
-        positions.push({
-            move: move.from + move.to + (move.promotion || ''),
-            fen: game.fen()
-        });
-
-        if (depth > 1 && !game.game_over()) {
-            // Recursively get positions for subsequent moves
-            const childPositions = generatePositions(game, depth - 1);
-            positions.push(...childPositions);
-        }
-
-        // Undo the move
-        game.undo();
-    }
-
-    return positions;
-}
-
-/**
- * @description
- * Starts a new game.
- * This function resets the board to its initial position and
- * checks the player's turn based on the user's color choice,
- * calling the `updateStatus` function to track game status.
- * 
- * @function
- * @returns This function does not return anything.
- * 
- * @see {@link showGameOver}()
- * @see {@link updateStatus}()
- * 
-*/
-=======
 // Start new game
->>>>>>> 3e0d7e3 (added evaluation function, started a good basis for a proper engine. currently does not generate best moves. As well as added a flask api in order to have my engine interact with the front-end)
 function startNewGame() {
     game.reset();
     board.start();
