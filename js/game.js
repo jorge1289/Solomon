@@ -222,9 +222,95 @@ function updateEngineStatus(isThinking) {
     }
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
+=======
+class ChessEngineInterface {
+    constructor(apiUrl) {
+        this.apiUrl = apiUrl;
+        this.isThinking = false;
+    }
+    
+    async makeMove(game, depth = 3) {
+        if (this.isThinking) return null;
+        
+        try {
+            this.isThinking = true;
+            const positions = this._generatePositions(game, depth);
+            
+            console.log('Generated positions:', positions); // Debug log
+            
+            const response = await fetch(`${this.apiUrl}/api/get-move`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ positions, depth })
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Server response:', response.status, errorText);
+                throw new Error(`Engine API error: ${errorText}`);
+            }
+            
+            const result = await response.json();
+            console.log('Received result:', result);
+            
+            if (!result.move) throw new Error('No move returned');
+            
+            return result;
+            
+        } catch (error) {
+            console.error('Engine error:', error);
+            return this._makeRandomMove(game);
+        } finally {
+            this.isThinking = false;
+        }
+    }
+    
+    _generatePositions(game, depth) {
+        const positions = [];
+        
+        try {
+            const moves = game.moves({ verbose: true });
+            console.log(`Generating positions for ${moves.length} possible moves`);
+            
+            for (const move of moves) {
+                game.move(move);
+                
+                const position = {
+                    move: move.from + move.to + (move.promotion || ''),
+                    fen: game.fen()
+                };
+                positions.push(position);
+                
+                game.undo();
+            }
+            
+            console.log(`Generated ${positions.length} positions`);
+            return positions;
+            
+        } catch (error) {
+            console.error('Error generating positions:', error);
+            return positions;
+        }
+    }
+
+    _makeRandomMove(game) {
+        const moves = game.moves();
+        if (moves.length === 0) return null;
+        
+        const move = moves[Math.floor(Math.random() * moves.length)];
+        return { move, score: 0, nodes: 1 };
+    }
+}
+
+// Usage in your game code
+const engine = new ChessEngineInterface(API_URL);
+
+<<<<<<< HEAD
+>>>>>>> b412ad7 (added evaluation function, started a good basis for a proper engine. currently does not generate best moves. As well as added a flask api in order to have my engine interact with the front-end)
 class ChessEngineInterface {
     constructor(apiUrl) {
         this.apiUrl = apiUrl;
@@ -330,10 +416,15 @@ async function makeEngineMove() {
 */
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 function makeEngineMove() {
     // Only make move if it's engine's turn
 >>>>>>> f49d24d (Add JSDocs for utility functions (#18))
 =======
+=======
+=======
+>>>>>>> 3e0d7e3 (added evaluation function, started a good basis for a proper engine. currently does not generate best moves. As well as added a flask api in order to have my engine interact with the front-end)
+>>>>>>> b412ad7 (added evaluation function, started a good basis for a proper engine. currently does not generate best moves. As well as added a flask api in order to have my engine interact with the front-end)
 async function makeEngineMove() {
     // Debug logging
     console.log('Turn:', game.turn(), 'Player Color:', playerColor);
@@ -352,39 +443,33 @@ async function makeEngineMove() {
 =======
 >>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
     try {
-        // Generate all possible positions for each legal move
-        const positions = generatePositions(game, 3); // depth = 3
-
-        const response = await fetch(`${API_URL}/api/get-move`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                positions: positions,
-                depth: 3
-            })
-        });
+        const result = await engine.makeMove(game, 3);
+        console.log('Engine returned move:', result);
         
-        const { move, score, nodes } = await response.json();
-        
-        if (move) {
-            game.move(move);
-            board.position(game.fen());
-            updateStatus();
-            console.log(`Evaluated ${nodes} positions, best move score: ${score}`);
+        if (result && result.move) {
+            // Convert the move string to an object
+            const move = {
+                from: result.move.substring(0, 2),
+                to: result.move.substring(2, 4),
+                promotion: result.move.length > 4 ? result.move.substring(4, 5) : undefined
+            };
+            
+            console.log('Attempting move:', move);
+            
+            // Try to make the move
+            const madeMove = game.move(move);
+            console.log('Move result:', madeMove);
+            
+            if (madeMove) {
+                board.position(game.fen());
+                updateStatus();
+                console.log(`Engine moved: ${result.move}, evaluated ${result.nodes} positions, score: ${result.score}`);
+            } else {
+                console.error('Invalid move:', move);
+            }
         }
-
     } catch (error) {
-        console.error('Error in engine move:', error);
-        // Fallback to random move if evaluation fails
-        var moves = game.moves();
-        if (moves.length > 0) {
-            const randomMove = moves[Math.floor(Math.random() * moves.length)];
-            game.move(randomMove);
-            board.position(game.fen());
-            updateStatus();
-        }
+        console.error('Error making engine move:', error);
     } finally {
         updateEngineStatus(false);
 <<<<<<< HEAD
@@ -402,6 +487,7 @@ async function makeEngineMove() {
     }
 }
 
+<<<<<<< HEAD
 function generatePositions(game, depth) {
     if (depth === 0) {
         return [{
@@ -450,6 +536,9 @@ function generatePositions(game, depth) {
  * @see {@link updateStatus}()
  * 
 */
+=======
+// Start new game
+>>>>>>> 3e0d7e3 (added evaluation function, started a good basis for a proper engine. currently does not generate best moves. As well as added a flask api in order to have my engine interact with the front-end)
 function startNewGame() {
     game.reset();
     board.start();
