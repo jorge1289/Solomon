@@ -12,7 +12,7 @@ var config = {
     orientation: 'white',
     pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
     onDrop: handleMove,
-    onDragStart: handleDragStart 
+    onDragStart: selectedHighlight 
 };
 
 // Initialize the board with the config
@@ -36,6 +36,31 @@ var board = Chessboard('board', config);
  * @see {@link https://chessboardjs.com/examples#5000}
 */
 
+// Function to highlight possible next positions for the selected piece. 
+function selectedHighlight(source, piece) {
+    // Example: Prevent dragging opponent's pieces
+    removeHighlights();
+    if ((game.turn() === 'w' && piece.startsWith('b')) ||
+        (game.turn() === 'b' && piece.startsWith('w'))) {
+        return false;
+    }
+    
+    // Log the selected piece and its position
+    console.log(`Selected piece: ${piece} on square: ${source}`);
+    console.log("possible moves :",game.moves()); // oposite player's move
+    var validMoves = game.moves({ square: source, verbose: true });
+    console.log(validMoves);
+    space=[];
+    validMoves.map((v)=>{
+        space.push(v.to)
+    })
+
+    space.forEach((s)=>{
+        $(`#board .square-${s}`).addClass('highlight')
+    })
+    console.log(space);
+
+}
 function handleMove(source, target) {
     // Only allow moves if it's player's turn
     if ((game.turn() === 'w' && playerColor === 'b') ||
@@ -63,35 +88,6 @@ function handleMove(source, target) {
     }
 }
 
-function handleDragStart(source, piece, position, orientation) {
-    // Example: Prevent dragging opponent's pieces
-    removeHighlights();
-    if ((game.turn() === 'w' && piece.startsWith('b')) ||
-        (game.turn() === 'b' && piece.startsWith('w'))) {
-        return false;
-    }
-    
-    // Log the selected piece and its position
-    console.log(`Selected piece: ${piece} on square: ${source}`);
-    console.log("possible moves :",game.moves()); // oposite player's move
-    var validMoves = game.moves({ square: source, verbose: true });
-    console.log(validMoves);
-    space=[];
-    validMoves.map((v)=>{
-        space.push(v.to)
-    })
-
-    space.forEach((s)=>{
-        $(`#board .square-${s}`).addClass('highlight')
-    })
-    console.log(space);
-
-
-
-    
-
-    
-}
 
 /**
  * @description
