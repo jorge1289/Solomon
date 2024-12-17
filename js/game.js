@@ -3,6 +3,8 @@ var game = new Chess();
 var $status = $('#status');
 var $gameOver = $('#game-over');
 var playerColor = 'w';
+var $engineStatus = $('#engine-status');
+const API_URL = 'http://localhost:5001';
 var currentGameState = game.fen();
 
 // Configure the board with piece theme
@@ -17,6 +19,31 @@ var config = {
 
 // Initialize the board with the config
 var board = Chessboard('board', config);
+
+function selectedHighlight(source, piece) {
+    // Clear previous highlights
+    removeHighlights();
+
+    // Prevent highlighting for opponent's pieces
+    if ((game.turn() === 'w' && piece.startsWith('b')) ||
+        (game.turn() === 'b' && piece.startsWith('w'))) {
+        return false;
+    }
+    
+    // Get valid moves
+    var validMoves = game.moves({ square: source, verbose: true });
+    
+    // Apply highlights
+    validMoves.forEach((move) => {
+        const $square = $(`#board .square-${move.to}`);
+        $square.addClass('highlight');
+        
+        // Add special class for squares with pieces
+        if (move.captured || game.get(move.to)) {
+            $square.addClass('has-piece');
+        }
+    });
+}
 
 /**
  * @param {string} source The source square of the move in algebraic notation
@@ -35,32 +62,6 @@ var board = Chessboard('board', config);
  * @see {@link https://github.com/jhlywa/chess.js/blob/master/README.md#api} <br>
  * @see {@link https://chessboardjs.com/examples#5000}
 */
-
-// Function to highlight possible next positions for the selected piece. 
-function selectedHighlight(source, piece) {
-    // Example: Prevent dragging opponent's pieces
-    removeHighlights();
-    if ((game.turn() === 'w' && piece.startsWith('b')) ||
-        (game.turn() === 'b' && piece.startsWith('w'))) {
-        return false;
-    }
-    
-    // Log the selected piece and its position
-    console.log(`Selected piece: ${piece} on square: ${source}`);
-    console.log("possible moves :",game.moves()); // oposite player's move
-    var validMoves = game.moves({ square: source, verbose: true });
-    console.log(validMoves);
-    space=[];
-    validMoves.map((v)=>{
-        space.push(v.to)
-    })
-
-    space.forEach((s)=>{
-        $(`#board .square-${s}`).addClass('highlight')
-    })
-    console.log(space);
-
-}
 function handleMove(source, target) {
     // Only allow moves if it's player's turn
     if ((game.turn() === 'w' && playerColor === 'b') ||
@@ -87,7 +88,6 @@ function handleMove(source, target) {
         window.setTimeout(makeEngineMove, 250);
     }
 }
-
 
 /**
  * @description
@@ -200,36 +200,152 @@ function showGameOver(message) {
     `).fadeIn();
 }
 
+// Add this function
+function updateEngineStatus(isThinking) {
+    if (isThinking) {
+        $engineStatus.html('Engine is thinking...').show();
+    } else {
+        $engineStatus.hide();
+    }
+}
+class ChessEngineInterface {
+    constructor(apiUrl) {
+        this.apiUrl = apiUrl;
+        this.isThinking = false;
+    }
+    
+    async makeMove(game, depth = 3) {
+        if (this.isThinking) return null;
+        
+        try {
+            this.isThinking = true;
+            const positions = this._generatePositions(game, depth);
+            
+            console.log('Generated positions:', positions); // Debug log
+            
+            const response = await fetch(`${this.apiUrl}/api/get-move`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ positions, depth })
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Server response:', response.status, errorText);
+                throw new Error(`Engine API error: ${errorText}`);
+            }
+            
+            const result = await response.json();
+            console.log('Received result:', result);
+            
+            if (!result.move) throw new Error('No move returned');
+            
+            return result;
+            
+        } catch (error) {
+            console.error('Engine error:', error);
+            return this._makeRandomMove(game);
+        } finally {
+            this.isThinking = false;
+        }
+    }
+    
+    _generatePositions(game, depth) {
+        const positions = [];
+        
+        try {
+            const moves = game.moves({ verbose: true });
+            console.log(`Generating positions for ${moves.length} possible moves`);
+            
+            for (const move of moves) {
+                game.move(move);
+                
+                const position = {
+                    move: move.from + move.to + (move.promotion || ''),
+                    fen: game.fen()
+                };
+                positions.push(position);
+                
+                game.undo();
+            }
+            
+            console.log(`Generated ${positions.length} positions`);
+            return positions;
+            
+        } catch (error) {
+            console.error('Error generating positions:', error);
+            return positions;
+        }
+    }
+
+    _makeRandomMove(game) {
+        const moves = game.moves();
+        if (moves.length === 0) return null;
+        
+        const move = moves[Math.floor(Math.random() * moves.length)];
+        return { move, score: 0, nodes: 1 };
+    }
+}
+
+// Usage in your game code
+const engine = new ChessEngineInterface(API_URL);
+
 /**
  * @description
  * Makes a move for the engine only on its turn.
- * The engine will randomly select one of the available move and apply it to the game.
+ * The engine will use the given engine.
  * 
  * This function checks if it is engine's turn based on the current turn and the player's color.
- * If it's the engine's turn, it selects a random move from the list of valid moves and executes it.
+ * If it's the engine's turn, it determines the best move using an evaluation function.
  * Then, it calls the `updateStatus` function, updating the board position and game status.
  * 
  * @function
  * @returns {void} This function does not return a value; it updates the user interface as a side-effect
  * @see {@link updateStatus}()
 */
-
-function makeEngineMove() {
-    // Only make move if it's engine's turn
+async function makeEngineMove() {
+    // Debug logging
+    console.log('Turn:', game.turn(), 'Player Color:', playerColor);
+    
     if ((game.turn() === 'w' && playerColor === 'w') ||
         (game.turn() === 'b' && playerColor === 'b')) {
+        console.log('Not engine turn, returning');
         return;
     }
 
-    var moves = game.moves();
+    updateEngineStatus(true);
     
-    if (moves.length > 0) {
-        var randomIdx = Math.floor(Math.random() * moves.length);
-        var move = moves[randomIdx];
-        game.move(move);
-        board.position(game.fen());
-        updateStatus();
-        showHistory();
+    try {
+        const result = await engine.makeMove(game, 3);
+        console.log('Engine returned move:', result);
+        
+        if (result && result.move) {
+            // Convert the move string to an object
+            const move = {
+                from: result.move.substring(0, 2),
+                to: result.move.substring(2, 4),
+                promotion: result.move.length > 4 ? result.move.substring(4, 5) : undefined
+            };
+            
+            console.log('Attempting move:', move);
+            
+            // Try to make the move
+            const madeMove = game.move(move);
+            console.log('Move result:', madeMove);
+            
+            if (madeMove) {
+                board.position(game.fen());
+                updateStatus();
+                showHistory();
+                console.log(`Engine moved: ${result.move}, evaluated ${result.nodes} positions, score: ${result.score}`);
+            } else {
+                console.error('Invalid move:', move);
+            }
+        }
+    } catch (error) {
+        console.error('Error making engine move:', error);
+    } finally {
+        updateEngineStatus(false);
     }
 }
 
@@ -257,9 +373,10 @@ function startNewGame() {
     if (playerColor === 'b') {
         makeEngineMove();
     }
-    
+
     updateStatus();
     showHistory();
+
 }
 
 // Show move history

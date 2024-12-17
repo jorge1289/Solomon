@@ -8,15 +8,22 @@ A chess engine implementation using chess.js and chessboard.js. This project aim
 
 - Interactive chess board interface
 - Legal move validation
-- Basic AI opponent (currently makes random moves)
+- Position evaluation engine
 - Responsive design
+- Python Flask backend for chess engine calculations
+- Move analysis and scoring
 
 ## 📋 Prerequisites
 
-No installation required! The project uses CDN-hosted libraries:
+### Frontend Dependencies (CDN-hosted):
 - chess.js
 - chessboard.js
 - jQuery
+
+### Backend Dependencies:
+- Python 3.7+
+- Flask
+- Flask-CORS
 
 ## 🎮 Getting Started
 
@@ -26,8 +33,29 @@ No installation required! The project uses CDN-hosted libraries:
    cd Solomon
    ```
 
-2. Open `index.html` in your browser or use a local server:
+2. Set up the Python environment:
+   ```bash
+   # Create virtual environment
+   python -m venv .venv
 
+   # Activate virtual environment
+   # On Windows:
+   .venv\Scripts\activate
+   # On macOS/Linux:
+   source .venv/bin/activate
+
+   # Install dependencies
+   pip install flask flask-cors
+   ```
+
+3. Start the Flask server:
+   ```bash
+   # Make sure you're in the project root directory
+   python app.py
+   ```
+   The engine will run on `http://localhost:5001`
+
+4. Start the frontend server:
    Using Python:
    ```bash
    python -m http.server
@@ -35,16 +63,43 @@ No installation required! The project uses CDN-hosted libraries:
    Then visit `http://localhost:8000`
 
    If you have Node.js installed:
+   ```bash
+   npm install -g serve
+   serve
+   ```
+   Open your browser to the URL it provides
+
+
+=======
       Install a simple server: npm install -g serve
       Navigate to your project folder
       Run: serve
       Open your browser to the URL it provides
 
+## 🏗️ Project Structure
+
+```
+Solomon/
+├── app.py              # Flask server
+├── engine/
+│   ├── __init__.py
+│   ├── evaluation.py   # Chess position evaluation
+│   ├── constants.py    # Chess piece values and tables
+│   └── board_utils.py  # Board manipulation utilities
+├── static/
+│   ├── js/
+│   │   ├── game.js    # Game logic
+│   └── css/
+│       └── style.css
+└── index.html
+```
+
 ## 🛠️ Development Roadmap
 
 - [x] Basic board setup and move validation
-- [ ] Position evaluation function
-- [ ] Minimax algorithm implementation
+- [x] Flask backend integration
+- [x] Position evaluation function
+- [x] Minimax algorithm implementation
 - [ ] Alpha-beta pruning optimization
 - [ ] Opening book integration
 - [ ] Endgame tablebase integration
@@ -70,9 +125,13 @@ This project makes use of the following open-source libraries:
 - [chess.js](https://github.com/jhlywa/chess.js) - Chess logic implementation
 - [chessboard.js](https://chessboardjs.com/) - Chessboard UI
 - [jQuery](https://jquery.com/) - Required by chessboard.js
+- [Flask](https://flask.palletsprojects.com/) - Python web framework
+- [Flask-CORS](https://flask-cors.readthedocs.io/) - Cross-Origin Resource Sharing for Flask
 
 ## 📧 Contact
 
-Jorge Emanuel Nunez - [jorge1289@berkeley.edu](mailto:your-email@example.com)
 
-[https://github.com/jorge1289/Solomon](https://github.com/jorge1289/Solomon)```
+Jorge Emanuel Nunez - [jorge1289@berkeley.edu](mailto:jorge1289@berkeley.edu)
+
+Project Link: [https://github.com/jorge1289/Solomon](https://github.com/jorge1289/Solomon)
+
