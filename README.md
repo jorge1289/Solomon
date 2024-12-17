@@ -69,6 +69,13 @@ A chess engine implementation using chess.js and chessboard.js. This project aim
    ```
    Open your browser to the URL it provides
 
+
+=======
+      Install a simple server: npm install -g serve
+      Navigate to your project folder
+      Run: serve
+      Open your browser to the URL it provides
+
 ## 🏗️ Project Structure
 
 ```
@@ -123,6 +130,8 @@ This project makes use of the following open-source libraries:
 
 ## 📧 Contact
 
+
 Jorge Emanuel Nunez - [jorge1289@berkeley.edu](mailto:jorge1289@berkeley.edu)
 
 Project Link: [https://github.com/jorge1289/Solomon](https://github.com/jorge1289/Solomon)
+

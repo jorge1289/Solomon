@@ -5,6 +5,8 @@ var $gameOver = $('#game-over');
 var playerColor = 'w';
 var $engineStatus = $('#engine-status');
 const API_URL = 'http://localhost:5001';
+var currentGameState = game.fen();
+
 // Configure the board with piece theme
 var config = {
     position: 'start',
@@ -12,7 +14,7 @@ var config = {
     orientation: 'white',
     pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
     onDrop: handleMove,
-    onDragStart: selectedHighlight
+    onDragStart: selectedHighlight 
 };
 
 // Initialize the board with the config
@@ -78,6 +80,8 @@ function handleMove(source, target) {
     if (move === null) return 'snapback';
 
     updateStatus();
+
+    
 
     // After player moves, call your engine
     if (!game.game_over()) {
@@ -286,6 +290,19 @@ class ChessEngineInterface {
 // Usage in your game code
 const engine = new ChessEngineInterface(API_URL);
 
+/**
+ * @description
+ * Makes a move for the engine only on its turn.
+ * The engine will use the given engine.
+ * 
+ * This function checks if it is engine's turn based on the current turn and the player's color.
+ * If it's the engine's turn, it determines the best move using an evaluation function.
+ * Then, it calls the `updateStatus` function, updating the board position and game status.
+ * 
+ * @function
+ * @returns {void} This function does not return a value; it updates the user interface as a side-effect
+ * @see {@link updateStatus}()
+*/
 async function makeEngineMove() {
     // Debug logging
     console.log('Turn:', game.turn(), 'Player Color:', playerColor);
@@ -349,14 +366,17 @@ async function makeEngineMove() {
 function startNewGame() {
     game.reset();
     board.start();
+    $('#history').empty();
     $gameOver.fadeOut();
     
     // If playing as black, make engine move first
     if (playerColor === 'b') {
         makeEngineMove();
     }
-    
+
     updateStatus();
+    showHistory();
+
 }
 
 // Show move history
