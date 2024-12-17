@@ -3,18 +3,8 @@ var game = new Chess();
 var $status = $('#status');
 var $gameOver = $('#game-over');
 var playerColor = 'w';
-<<<<<<< HEAD
 var $engineStatus = $('#engine-status');
 const API_URL = 'http://localhost:5001';
-=======
-var currentGameState = game.fen();
-<<<<<<< HEAD
-
->>>>>>> 6c9503b (Added realtime move history panel with highlighting (#20))
-=======
-var $engineStatus = $('#engine-status');
-const API_URL = 'http://localhost:5001';
->>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
 // Configure the board with piece theme
 var config = {
     position: 'start',
@@ -22,13 +12,12 @@ var config = {
     orientation: 'white',
     pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
     onDrop: handleMove,
-    onDragStart: selectedHighlight 
+    onDragStart: selectedHighlight
 };
 
 // Initialize the board with the config
 var board = Chessboard('board', config);
 
-// Function to highlight possible next positions for the selected piece. 
 function selectedHighlight(source, piece) {
     // Clear previous highlights
     removeHighlights();
@@ -89,8 +78,6 @@ function handleMove(source, target) {
     if (move === null) return 'snapback';
 
     updateStatus();
-
-    
 
     // After player moves, call your engine
     if (!game.game_over()) {
@@ -209,10 +196,6 @@ function showGameOver(message) {
     `).fadeIn();
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
 // Add this function
 function updateEngineStatus(isThinking) {
     if (isThinking) {
@@ -221,16 +204,6 @@ function updateEngineStatus(isThinking) {
         $engineStatus.hide();
     }
 }
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-
->>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
-=======
-=======
-
->>>>>>> 641c919 (rebased and added all changes from main)
 class ChessEngineInterface {
     constructor(apiUrl) {
         this.apiUrl = apiUrl;
@@ -313,130 +286,10 @@ class ChessEngineInterface {
 // Usage in your game code
 const engine = new ChessEngineInterface(API_URL);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> b412ad7 (added evaluation function, started a good basis for a proper engine. currently does not generate best moves. As well as added a flask api in order to have my engine interact with the front-end)
-class ChessEngineInterface {
-    constructor(apiUrl) {
-        this.apiUrl = apiUrl;
-        this.isThinking = false;
-    }
-    
-    async makeMove(game, depth = 3) {
-        if (this.isThinking) return null;
-        
-        try {
-            this.isThinking = true;
-            const positions = this._generatePositions(game, depth);
-            
-            console.log('Generated positions:', positions); // Debug log
-            
-            const response = await fetch(`${this.apiUrl}/api/get-move`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ positions, depth })
-            });
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Server response:', response.status, errorText);
-                throw new Error(`Engine API error: ${errorText}`);
-            }
-            
-            const result = await response.json();
-            console.log('Received result:', result);
-            
-            if (!result.move) throw new Error('No move returned');
-            
-            return result;
-            
-        } catch (error) {
-            console.error('Engine error:', error);
-            return this._makeRandomMove(game);
-        } finally {
-            this.isThinking = false;
-        }
-    }
-    
-    _generatePositions(game, depth) {
-        const positions = [];
-        
-        try {
-            const moves = game.moves({ verbose: true });
-            console.log(`Generating positions for ${moves.length} possible moves`);
-            
-            for (const move of moves) {
-                game.move(move);
-                
-                const position = {
-                    move: move.from + move.to + (move.promotion || ''),
-                    fen: game.fen()
-                };
-                positions.push(position);
-                
-                game.undo();
-            }
-            
-            console.log(`Generated ${positions.length} positions`);
-            return positions;
-            
-        } catch (error) {
-            console.error('Error generating positions:', error);
-            return positions;
-        }
-    }
-
-    _makeRandomMove(game) {
-        const moves = game.moves();
-        if (moves.length === 0) return null;
-        
-        const move = moves[Math.floor(Math.random() * moves.length)];
-        return { move, score: 0, nodes: 1 };
-    }
-}
-
-// Usage in your game code
-const engine = new ChessEngineInterface(API_URL);
-
-<<<<<<< HEAD
 async function makeEngineMove() {
     // Debug logging
     console.log('Turn:', game.turn(), 'Player Color:', playerColor);
     
-=======
-=======
->>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
-/**
- * @description
- * Makes a move for the engine only on its turn.
- * The engine will make a move following our algorithm.
- * 
- * This function checks if it is engine's turn based on the current turn and the player's color.
- * If it's the engine's turn, it determines a move using the provided chess engine.
- * Then, it calls the `updateStatus` function, updating the board position and game status.
- * 
- * @function
- * @returns {void} This function does not return a value; it updates the user interface as a side-effect
- * @see {@link updateStatus}()
-*/
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-function makeEngineMove() {
-    // Only make move if it's engine's turn
->>>>>>> f49d24d (Add JSDocs for utility functions (#18))
-=======
-=======
-=======
->>>>>>> 3e0d7e3 (added evaluation function, started a good basis for a proper engine. currently does not generate best moves. As well as added a flask api in order to have my engine interact with the front-end)
->>>>>>> b412ad7 (added evaluation function, started a good basis for a proper engine. currently does not generate best moves. As well as added a flask api in order to have my engine interact with the front-end)
-=======
->>>>>>> 641c919 (rebased and added all changes from main)
-async function makeEngineMove() {
-    // Debug logging
-    console.log('Turn:', game.turn(), 'Player Color:', playerColor);
-    
->>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
     if ((game.turn() === 'w' && playerColor === 'w') ||
         (game.turn() === 'b' && playerColor === 'b')) {
         console.log('Not engine turn, returning');
@@ -445,10 +298,6 @@ async function makeEngineMove() {
 
     updateEngineStatus(true);
     
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
     try {
         const result = await engine.makeMove(game, 3);
         console.log('Engine returned move:', result);
@@ -470,7 +319,7 @@ async function makeEngineMove() {
             if (madeMove) {
                 board.position(game.fen());
                 updateStatus();
-                showHistory(); 
+                showHistory();
                 console.log(`Engine moved: ${result.move}, evaluated ${result.nodes} positions, score: ${result.score}`);
             } else {
                 console.error('Invalid move:', move);
@@ -480,26 +329,26 @@ async function makeEngineMove() {
         console.error('Error making engine move:', error);
     } finally {
         updateEngineStatus(false);
-<<<<<<< HEAD
-=======
-    if (moves.length > 0) {
-        var randomIdx = Math.floor(Math.random() * moves.length);
-        var move = moves[randomIdx];
-        game.move(move);
-        board.position(game.fen());
-        updateStatus();
-        showHistory();
->>>>>>> 6c9503b (Added realtime move history panel with highlighting (#20))
-=======
->>>>>>> aa553e6 ( adding all depedencies and scripts to enable the next phase of the engine, which is to enable board evaluation and alpha-beta prunning)
     }
 }
 
-// Start new game
+/**
+ * @description
+ * Starts a new game.
+ * This function resets the board to its initial position and
+ * checks the player's turn based on the user's color choice,
+ * calling the `updateStatus` function to track game status.
+ * 
+ * @function
+ * @returns This function does not return anything.
+ * 
+ * @see {@link showGameOver}()
+ * @see {@link updateStatus}()
+ * 
+*/
 function startNewGame() {
     game.reset();
     board.start();
-    $('#history').empty();
     $gameOver.fadeOut();
     
     // If playing as black, make engine move first
@@ -508,7 +357,6 @@ function startNewGame() {
     }
     
     updateStatus();
-    showHistory();
 }
 
 // Show move history
