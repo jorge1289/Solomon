@@ -208,6 +208,7 @@ function updateEngineStatus(isThinking) {
         $engineStatus.hide();
     }
 }
+
 class ChessEngineInterface {
     constructor(apiUrl) {
         this.apiUrl = apiUrl;
