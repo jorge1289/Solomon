@@ -2,8 +2,9 @@
 Chess evaluation constants based on PeSTO's Evaluation Function
 Credit: Original implementation by Pawel Koziol in TSCP (Tom Kerrigan's Simple Chess Program)
 """
+from enum import IntEnum
 
-# Piece mappings
+# Piece mappings for evaluation purposes
 PIECES = {
     'P': 0, 'N': 1, 'B': 2, 'R': 3, 'Q': 4, 'K': 5,
     'p': 0, 'n': 1, 'b': 2, 'r': 3, 'q': 4, 'k': 5
@@ -153,3 +154,57 @@ TOTAL_PHASE = 16 * 0 + 4 * 1 + 4 * 1 + 4 * 2 + 2 * 4  # 24
 # Search parameters
 DEFAULT_DEPTH = 3
 CHECKMATE_SCORE = 20000
+
+class Square(IntEnum):
+    A1, B1, C1, D1, E1, F1, G1, H1 = 0, 1, 2, 3, 4, 5, 6, 7
+    A2, B2, C2, D2, E2, F2, G2, H2 = 8, 9, 10, 11, 12, 13, 14, 15
+    A3, B3, C3, D3, E3, F3, G3, H3 = 16, 17, 18, 19, 20, 21, 22, 23
+    A4, B4, C4, D4, E4, F4, G4, H4 = 24, 25, 26, 27, 28, 29, 30, 31
+    A5, B5, C5, D5, E5, F5, G5, H5 = 32, 33, 34, 35, 36, 37, 38, 39
+    A6, B6, C6, D6, E6, F6, G6, H6 = 40, 41, 42, 43, 44, 45, 46, 47
+    A7, B7, C7, D7, E7, F7, G7, H7 = 48, 49, 50, 51, 52, 53, 54, 55
+    A8, B8, C8, D8, E8, F8, G8, H8 = 56, 57, 58, 59, 60, 61, 62, 63
+
+class BitboardPieces:
+    def __init__(self):
+        # One bitboard per piece type and color
+        self.W_PAWNS = 0
+        self.W_KNIGHTS = 0
+        self.W_BISHOPS = 0
+        self.W_ROOKS = 0
+        self.W_QUEENS = 0
+        self.W_KING = 0
+        self.B_PAWNS = 0
+        self.B_KNIGHTS = 0
+        self.B_BISHOPS = 0
+        self.B_ROOKS = 0
+        self.B_QUEENS = 0
+        self.B_KING = 0
+        
+        # Combined occupancy
+        self.W_PIECES = 0  # All white pieces
+        self.B_PIECES = 0  # All black pieces
+        self.ALL_PIECES = 0  # All pieces
+
+# pre-calculated attack tables
+KNIGHT_ATTACKS = [0] * 64
+KING_ATTACKS = [0] * 64
+PAWN_ATTACKS_WHITE = [0] * 64
+PAWN_ATTACKS_BLACK = [0] * 64
+
+# Directional shifts for sliding pieces
+NORTH = 8
+SOUTH = -8
+EAST = 1
+WEST = -1
+NORTH_EAST = 9
+NORTH_WEST = 7
+SOUTH_EAST = -7
+SOUTH_WEST = -9
+
+
+
+
+
+
+

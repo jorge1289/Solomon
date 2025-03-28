@@ -55,9 +55,12 @@ def get_move():
             if 'move' not in pos:
                 return jsonify({'error': 'Missing move in position'}), 400
                 
-        depth = data.get('depth', 3)
+        depth = data.get('depth')
         
         # Process the move
+        print(f"Calling engine with depth: {depth}")
+        # Limit max depth to 6 for reasonable response times
+        depth = min(depth, 6)
         print(f"Processing {len(positions)} positions at depth {depth}")
         result = evaluator.get_best_move(positions, depth)
         print(f"Engine result: {result}")

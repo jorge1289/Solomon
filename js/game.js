@@ -215,13 +215,15 @@ class ChessEngineInterface {
         this.isThinking = false;
     }
     
-    async makeMove(game, depth = 3) {
+    async makeMove(game, depth) {
         if (this.isThinking) return null;
         
         try {
             this.isThinking = true;
+            console.log('BEFORE depth check');
+            console.log('checking depth:', depth); 
+            console.log('AFTER depth check');
             const positions = this._generatePositions(game, depth);
-            
             console.log('Generated positions:', positions); // Debug log
             
             const response = await fetch(`${this.apiUrl}/api/get-move`, {
@@ -317,7 +319,7 @@ async function makeEngineMove() {
     updateEngineStatus(true);
     
     try {
-        const result = await engine.makeMove(game, 3);
+        const result = await engine.makeMove(game, 4);
         console.log('Engine returned move:', result);
         
         if (result && result.move) {
