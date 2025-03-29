@@ -16,6 +16,7 @@ cors = CORS(app, resources={
     }
 })
 
+print("\n\n=== STARTING SERVER WITH NEW CODE - FEN-BASED ENGINE ===\n\n")
 # Initialize the chess evaluator
 evaluator = ChessEvaluator()
 
@@ -39,33 +40,50 @@ def get_move():
         if not data:
             return jsonify({'error': 'Empty request body'}), 400
             
-        if 'positions' not in data:
-            return jsonify({'error': 'Missing positions data'}), 400
+        # Check if using the new method (FEN) or old method (positions array)
+        if 'fen' in data:
+            # New method: evaluate a single position
+            fen = data['fen']
+            if not fen:
+                return jsonify({'error': 'Empty FEN position'}), 400
             
-        positions = data['positions']
-        if not positions or not isinstance(positions, list):
-            return jsonify({'error': 'Invalid positions format'}), 400
+            depth = data.get('depth', 4)
+            # Limit max depth to 6 for reasonable response times
+            depth = min(depth, 6)
+            
+            print(f"Evaluating position at depth {depth}: {fen}")
+            result = evaluator.get_best_move(fen, depth)
+            print(f"Engine result: {result}")
+            
+            return jsonify(result)
         
-        # Validate each position has required fields
-        for pos in positions:
-            if not isinstance(pos, dict):
-                return jsonify({'error': 'Each position must be an object'}), 400
-            if 'fen' not in pos:
-                return jsonify({'error': 'Missing FEN in position'}), 400
-            if 'move' not in pos:
-                return jsonify({'error': 'Missing move in position'}), 400
-                
-        depth = data.get('depth')
-        
-        # Process the move
-        print(f"Calling engine with depth: {depth}")
-        # Limit max depth to 6 for reasonable response times
-        depth = min(depth, 6)
-        print(f"Processing {len(positions)} positions at depth {depth}")
-        result = evaluator.get_best_move(positions, depth)
-        print(f"Engine result: {result}")
-        
-        return jsonify(result)
+        elif 'positions' in data:
+            # Legacy method: evaluate a list of positions
+            positions = data['positions']
+            if not positions or not isinstance(positions, list):
+                return jsonify({'error': 'Invalid positions format'}), 400
+            
+            # Validate each position has required fields
+            for pos in positions:
+                if not isinstance(pos, dict):
+                    return jsonify({'error': 'Each position must be an object'}), 400
+                if 'fen' not in pos:
+                    return jsonify({'error': 'Missing FEN in position'}), 400
+                if 'move' not in pos:
+                    return jsonify({'error': 'Missing move in position'}), 400
+            
+            depth = data.get('depth', 4)
+            # Limit max depth to 6 for reasonable response times
+            depth = min(depth, 6)
+            
+            print(f"Processing {len(positions)} positions at depth {depth}")
+            print(f"Note: Using legacy method. Consider switching to the new API.")
+            result = evaluator.get_best_move(positions, depth)
+            print(f"Engine result: {result}")
+            
+            return jsonify(result)
+        else:
+            return jsonify({'error': 'Missing position data. Provide either "fen" or "positions" field.'}), 400
         
     except Exception as e:
         print("Error processing request:")

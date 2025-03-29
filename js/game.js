@@ -220,16 +220,17 @@ class ChessEngineInterface {
         
         try {
             this.isThinking = true;
-            console.log('BEFORE depth check');
             console.log('checking depth:', depth); 
-            console.log('AFTER depth check');
-            const positions = this._generatePositions(game, depth);
-            console.log('Generated positions:', positions); // Debug log
             
+            // Get current FEN position
+            const fen = game.fen();
+            console.log('Current position FEN:', fen);
+            
+            // Call the API with FEN position
             const response = await fetch(`${this.apiUrl}/api/get-move`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ positions, depth })
+                body: JSON.stringify({ fen, depth })
             });
             
             if (!response.ok) {
@@ -253,34 +254,6 @@ class ChessEngineInterface {
         }
     }
     
-    _generatePositions(game, depth) {
-        const positions = [];
-        
-        try {
-            const moves = game.moves({ verbose: true });
-            console.log(`Generating positions for ${moves.length} possible moves`);
-            
-            for (const move of moves) {
-                game.move(move);
-                
-                const position = {
-                    move: move.from + move.to + (move.promotion || ''),
-                    fen: game.fen()
-                };
-                positions.push(position);
-                
-                game.undo();
-            }
-            
-            console.log(`Generated ${positions.length} positions`);
-            return positions;
-            
-        } catch (error) {
-            console.error('Error generating positions:', error);
-            return positions;
-        }
-    }
-
     _makeRandomMove(game) {
         const moves = game.moves();
         if (moves.length === 0) return null;

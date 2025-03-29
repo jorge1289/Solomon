@@ -22,89 +22,129 @@ class ChessEvaluator:
         self.move_history = []      # Store recent moves
         self.MAX_HISTORY = 10       # Keep track of last 10 moves
     
-    def get_best_move(self, positions: List[dict], depth: int) -> dict:
-        """Find best move using bitboard-based engine with iterative deepening."""
+    def get_best_move(self, fen: str, depth: int) -> dict:
+        """Evaluate a position directly from FEN and find the best move."""
         global nodes_evaluated
         nodes_evaluated = 0
         self.transposition_table.clear()
         
         try:
-            # Check if we have valid positions
-            if not positions:
+            # Parse FEN to bitboards
+            pieces, game_state = board_utils.parse_fen_to_bitboards(fen)
+            is_white = game_state['side_to_move'] == 'w'
+            print(f"Side to move: {game_state['side_to_move']}") # debugging
+            
+            # Generate all legal moves for the current position
+            all_moves = generate_all_moves(pieces, game_state)
+            print(f"Generated {len(all_moves)} moves for {'white' if is_white else 'black'}")
+            for i, move in enumerate(all_moves[:5]):  # Print first 5 moves
+                from_sq, to_sq = move
+                from_alg = board_utils.square_to_algebraic(from_sq)
+                to_alg = board_utils.square_to_algebraic(to_sq)
+                print(f"  Move {i}: {from_alg}{to_alg}")
+            
+            if not all_moves:
+                # No legal moves available
                 return {'move': None, 'score': 0, 'nodes': 0}
+            
+            # Order moves for better alpha-beta pruning
+            ordered_moves = order_moves(all_moves, pieces, game_state)
+            
+            # Filter moves to ensure they're coming from the correct side's pieces
+            valid_moves = []
+            for move in ordered_moves:
+                from_sq, to_sq = move
                 
-            # Parse the FEN from the first position to determine side to move
-            starting_fen = positions[0]['fen']
-            is_white = starting_fen.split(' ')[1] == 'w'
+                # Check if the move is from the correct side's piece
+                if is_white:
+                    is_correct_side = (
+                        board_utils.get_bit(pieces.W_PAWNS, from_sq) or
+                        board_utils.get_bit(pieces.W_KNIGHTS, from_sq) or
+                        board_utils.get_bit(pieces.W_BISHOPS, from_sq) or
+                        board_utils.get_bit(pieces.W_ROOKS, from_sq) or
+                        board_utils.get_bit(pieces.W_QUEENS, from_sq) or
+                        board_utils.get_bit(pieces.W_KING, from_sq)
+                    )
+                else:
+                    is_correct_side = (
+                        board_utils.get_bit(pieces.B_PAWNS, from_sq) or
+                        board_utils.get_bit(pieces.B_KNIGHTS, from_sq) or
+                        board_utils.get_bit(pieces.B_BISHOPS, from_sq) or
+                        board_utils.get_bit(pieces.B_ROOKS, from_sq) or
+                        board_utils.get_bit(pieces.B_QUEENS, from_sq) or
+                        board_utils.get_bit(pieces.B_KING, from_sq)
+                    )
+                
+                if is_correct_side:
+                    valid_moves.append(move)
+                else:
+                    print(f"  WARNING: Filtering out move {board_utils.square_to_algebraic(from_sq)}{board_utils.square_to_algebraic(to_sq)} - not from correct side")
+            
+            if not valid_moves:
+                print("ERROR: No valid moves for the correct side after filtering!")
+                return {'move': None, 'score': 0, 'nodes': 0}
+            
+            print(f"Filtered to {len(valid_moves)} valid moves for {'white' if is_white else 'black'}")
             
             best_move = None
             best_score = float('-inf') if is_white else float('inf')
             
-            # Store position evaluation results
-            position_scores = {}
-            
             # Iterative deepening - start from depth 1 and increase
-            # This helps improve move ordering and alpha-beta pruning effectiveness
             max_depth = min(depth, 10)  # Limit max depth for performance
             for current_depth in range(1, max_depth + 1):
                 print(f"Searching at depth {current_depth}...")
                 
-                # Sort positions by previous iteration scores (if available)
-                if current_depth > 1 and position_scores:
-                    if is_white:
-                        # White wants to maximize score
-                        sorted_positions = sorted(positions, 
-                                                  key=lambda pos: position_scores.get(pos['move'], float('-inf')),
-                                                  reverse=True)
-                    else:
-                        # Black wants to minimize score
-                        sorted_positions = sorted(positions, 
-                                                  key=lambda pos: position_scores.get(pos['move'], float('inf')))
-                else:
-                    sorted_positions = positions
-                
-                # Reset scores for this iteration
-                position_scores = {}
-                
-                # Convert each position to bitboards and evaluate using minimax
-                for position in sorted_positions:
-                    # Parse FEN to bitboards
-                    pieces, game_state = board_utils.parse_fen_to_bitboards(position['fen'])
+                # For each move, make it and evaluate the position
+                for move in valid_moves:
+                    from_sq, to_sq = move
+                    move_str = board_utils.square_to_algebraic(from_sq) + board_utils.square_to_algebraic(to_sq)
                     
-                    # Evaluate with minimax (opponent's perspective since move is already made)
+                    # Make move and get new position
+                    new_pieces, new_game_state = make_move(pieces, move, game_state)
+                    
+                    # Evaluate with minimax
+                    # The minimax evaluation gives us the score from the perspective of the player who just moved
+                    # So we're evaluating how good the position is for our opponent
                     score = minimax(
-                        pieces, 
-                        game_state, 
+                        new_pieces, 
+                        new_game_state, 
                         current_depth - 1, 
                         float('-inf'), 
                         float('inf'), 
-                        not is_white,
+                        not is_white,  # Opponent's turn after our move
                         self  # Pass the evaluator instance
                     )
                     
-                    # Store score for this position
-                    position_scores[position['move']] = score
+                    # Since the score is from the perspective of the opponent,
+                    # we need to negate it to get our perspective
+                    score = -score
                     
-                    # Update best move based on side to move
+                    # Update best move based on the current player
                     if ((is_white and score > best_score) or 
                         (not is_white and score < best_score) or
                         best_move is None):
                         best_score = score
-                        best_move = position['move']
+                        best_move = move
+                        print(f"New best move: {move_str} with score {score}")
                 
                 # Early termination if we found a mate
                 if abs(best_score) > CHECKMATE_SCORE - 1000:
                     break
-                    
-                # Time check (add a reasonable time check later for tournament play)
             
-            # If we have a valid move, return it
+            # Convert move to string format (e.g., "e2e4")
             if best_move:
+                from_sq, to_sq = best_move
+                move_str = board_utils.square_to_algebraic(from_sq) + board_utils.square_to_algebraic(to_sq)
+                
+                # Debug to make sure the move is for the correct side
+                print(f"Side to move: {game_state['side_to_move']}, Selected best move: {move_str}")
+                print(f"best_move after minmax: {best_move}")
+                
                 # Store move in history
-                self._update_move_history(best_move)
+                self._update_move_history(move_str)
                 
                 return {
-                    'move': best_move,
+                    'move': move_str,
                     'score': best_score,
                     'nodes': nodes_evaluated
                 }
@@ -115,8 +155,104 @@ class ChessEvaluator:
             print(f"Error in get_best_move: {e}")
             import traceback
             traceback.print_exc()
-            # Return a fallback move
-            return {'move': positions[0]['move'] if positions else None, 'score': 0, 'nodes': 0}
+            # Return a fallback
+            return {'move': None, 'score': 0, 'nodes': 0}
+    
+    # def get_best_move(self, positions: List[dict], depth: int) -> dict:
+    #     """Find best move using bitboard-based engine with iterative deepening."""
+    #     global nodes_evaluated
+    #     nodes_evaluated = 0
+    #     self.transposition_table.clear()
+        
+    #     try:
+    #         # Check if we have valid positions
+    #         if not positions:
+    #             return {'move': None, 'score': 0, 'nodes': 0}
+                
+    #         # Parse the FEN from the first position to determine side to move
+    #         starting_fen = positions[0]['fen']
+    #         is_white = starting_fen.split(' ')[1] == 'w'
+            
+    #         best_move = None
+    #         best_score = float('-inf') if is_white else float('inf')
+            
+    #         # Store position evaluation results
+    #         position_scores = {}
+            
+    #         # Iterative deepening - start from depth 1 and increase
+    #         # This helps improve move ordering and alpha-beta pruning effectiveness
+    #         max_depth = min(depth, 10)  # Limit max depth for performance
+    #         for current_depth in range(1, max_depth + 1):
+    #             print(f"Searching at depth {current_depth}...")
+                
+    #             # Sort positions by previous iteration scores (if available)
+    #             if current_depth > 1 and position_scores:
+    #                 if is_white:
+    #                     # White wants to maximize score
+    #                     sorted_positions = sorted(positions, 
+    #                                               key=lambda pos: position_scores.get(pos['move'], float('-inf')),
+    #                                               reverse=True)
+    #                 else:
+    #                     # Black wants to minimize score
+    #                     sorted_positions = sorted(positions, 
+    #                                               key=lambda pos: position_scores.get(pos['move'], float('inf')))
+    #             else:
+    #                 sorted_positions = positions
+                
+    #             # Reset scores for this iteration
+    #             position_scores = {}
+                
+    #             # Convert each position to bitboards and evaluate using minimax
+    #             for position in sorted_positions:
+    #                 # Parse FEN to bitboards
+    #                 pieces, game_state = board_utils.parse_fen_to_bitboards(position['fen'])
+                    
+    #                 # Evaluate with minimax (opponent's perspective since move is already made)
+    #                 score = minimax(
+    #                     pieces, 
+    #                     game_state, 
+    #                     current_depth - 1, 
+    #                     float('-inf'), 
+    #                     float('inf'), 
+    #                     not is_white,
+    #                     self  # Pass the evaluator instance
+    #                 )
+                    
+    #                 # Store score for this position
+    #                 position_scores[position['move']] = score
+                    
+    #                 # Update best move based on side to move
+    #                 if ((is_white and score > best_score) or 
+    #                     (not is_white and score < best_score) or
+    #                     best_move is None):
+    #                     best_score = score
+    #                     best_move = position['move']
+                
+    #             # Early termination if we found a mate
+    #             if abs(best_score) > CHECKMATE_SCORE - 1000:
+    #                 break
+                    
+    #             # Time check (add a reasonable time check later for tournament play)
+            
+    #         # If we have a valid move, return it
+    #         if best_move:
+    #             # Store move in history
+    #             self._update_move_history(best_move)
+                
+    #             return {
+    #                 'move': best_move,
+    #                 'score': best_score,
+    #                 'nodes': nodes_evaluated
+    #             }
+    #         else:
+    #             return {'move': None, 'score': 0, 'nodes': nodes_evaluated}
+                
+    #     except Exception as e:
+    #         print(f"Error in get_best_move: {e}")
+    #         import traceback
+    #         traceback.print_exc()
+    #         # Return a fallback move
+    #         return {'move': positions[0]['move'] if positions else None, 'score': 0, 'nodes': 0}
     
     def _update_move_history(self, move: str):
         """Update the history of moves played."""
@@ -177,7 +313,11 @@ def evaluate_positions(pieces: BitboardPieces) -> int:
 
     # Calculate game phase and interpolate
     phase = get_game_phase(pieces)
-    return ((mg_score * phase) + (eg_score * (256 - phase))) // 256
+    
+    # Final score is from white's perspective
+    final_score = ((mg_score * phase) + (eg_score * (256 - phase))) // 256
+    
+    return final_score
 
 
 def minimax(pieces: BitboardPieces, game_state: dict, depth: int, alpha: int, beta: int, maximizing: bool, evaluator=None) -> int:
@@ -187,11 +327,11 @@ def minimax(pieces: BitboardPieces, game_state: dict, depth: int, alpha: int, be
     nodes_evaluated += 1
     
     # Create a position key for the transposition table
-    position_key = (
+    position_key = hash((
         pieces.W_PAWNS, pieces.W_KNIGHTS, pieces.W_BISHOPS, pieces.W_ROOKS, pieces.W_QUEENS, pieces.W_KING,
         pieces.B_PAWNS, pieces.B_KNIGHTS, pieces.B_BISHOPS, pieces.B_ROOKS, pieces.B_QUEENS, pieces.B_KING,
         game_state['side_to_move'], game_state['castling_rights'], game_state['en_passant']
-    )
+    ))
     
     # Check if position is in transposition table
     if evaluator and position_key in evaluator.transposition_table and depth <= evaluator.transposition_table[position_key]['depth']:
@@ -199,13 +339,21 @@ def minimax(pieces: BitboardPieces, game_state: dict, depth: int, alpha: int, be
     
     # Base case - evaluate position
     if depth == 0:
+        # The evaluation function returns the score from white's perspective
+        # We need to adjust it based on who is to move
         score = evaluate_positions(pieces)
+        # If black is to move in a maximizing node, or white is to move in a minimizing node,
+        # we need to negate the score
+        is_white = game_state['side_to_move'] == 'w'
+        if (maximizing and not is_white) or (not maximizing and is_white):
+            score = -score
+            
         # Store in transposition table
         if evaluator:
             evaluator.transposition_table[position_key] = {'score': score, 'depth': depth}
         return score
     
-    # Generate legal moves
+    # Generate legal moves for the current position
     moves = generate_all_moves(pieces, game_state)
     
     # If no legal moves, check for checkmate or stalemate
@@ -223,34 +371,32 @@ def minimax(pieces: BitboardPieces, game_state: dict, depth: int, alpha: int, be
     # Try to order moves for better pruning (captures first)
     ordered_moves = order_moves(moves, pieces, game_state)
     
-    if maximizing:
-        max_eval = float('-inf')
-        for move in ordered_moves:
-            new_pieces, new_game_state = make_move(pieces, move, game_state)
-            eval = minimax(new_pieces, new_game_state, depth - 1, alpha, beta, False, evaluator)
-            max_eval = max(max_eval, eval)
-            alpha = max(alpha, max_eval)
-            if beta <= alpha:
-                break  # Beta cutoff
+    best_score = float('-inf') if maximizing else float('inf')
+    
+    for move in ordered_moves:
+        # Make move
+        new_pieces, new_game_state = make_move(pieces, move, game_state)
         
-        # Store result in transposition table
-        if evaluator:
-            evaluator.transposition_table[position_key] = {'score': max_eval, 'depth': depth}
-        return max_eval
-    else:
-        min_eval = float('inf')
-        for move in ordered_moves:
-            new_pieces, new_game_state = make_move(pieces, move, game_state)
-            eval = minimax(new_pieces, new_game_state, depth - 1, alpha, beta, True, evaluator)
-            min_eval = min(min_eval, eval)
-            beta = min(beta, min_eval)
-            if beta <= alpha:
-                break  # Alpha cutoff
+        # Recursive evaluation
+        score = minimax(new_pieces, new_game_state, depth - 1, alpha, beta, not maximizing, evaluator)
         
-        # Store result in transposition table
-        if evaluator:
-            evaluator.transposition_table[position_key] = {'score': min_eval, 'depth': depth}
-        return min_eval
+        # Update best score
+        if maximizing:
+            best_score = max(best_score, score)
+            alpha = max(alpha, best_score)
+        else:
+            best_score = min(best_score, score)
+            beta = min(beta, best_score)
+        
+        # Alpha-beta pruning
+        if beta <= alpha:
+            break
+    
+    # Store in transposition table
+    if evaluator:
+        evaluator.transposition_table[position_key] = {'score': best_score, 'depth': depth}
+    
+    return best_score
 
 def order_moves(moves: list, pieces: BitboardPieces, game_state: dict) -> list:
     """Order moves for better alpha-beta pruning (captures first)."""
@@ -315,7 +461,7 @@ def generate_all_moves(pieces: BitboardPieces, game_state: dict) -> list:
         moves.extend(board_utils.generate_en_passant_moves(
             pieces, game_state['en_passant'], is_white))
     
-    # Filter out moves that leave the king in check (in a more efficient way)
+    # Filter out moves that leave the king in check
     legal_moves = []
     king = pieces.W_KING if is_white else pieces.B_KING
     king_sq = board_utils.lsb(king)
@@ -326,7 +472,7 @@ def generate_all_moves(pieces: BitboardPieces, game_state: dict) -> list:
         
         # Make a temporary move
         new_pieces = BitboardPieces()
-        # Copy all bitboards (optimized)
+        # Copy all bitboards
         new_pieces.W_PAWNS = pieces.W_PAWNS
         new_pieces.W_KNIGHTS = pieces.W_KNIGHTS
         new_pieces.W_BISHOPS = pieces.W_BISHOPS
@@ -415,6 +561,8 @@ def make_move(pieces: BitboardPieces, move: tuple, game_state: dict) -> Tuple[Bi
     """Make a move on the bitboard and return the new state."""
     from_sq, to_sq = move
     is_white = game_state['side_to_move'] == 'w'
+    print(f"Making move for {'white' if is_white else 'black'}: {board_utils.square_to_algebraic(from_sq)}{board_utils.square_to_algebraic(to_sq)}")
+    
     new_pieces = BitboardPieces()
     new_game_state = game_state.copy()
     
@@ -457,7 +605,7 @@ def make_move(pieces: BitboardPieces, move: tuple, game_state: dict) -> Tuple[Bi
             new_game_state['halfmove_clock'] = 0
             
             # Handle pawn promotion
-            if to_sq < 8:  # Reaching the 8th rank
+            if to_sq // 8 == 0:  # Reaching the 8th rank (row index 0)
                 # Promote to queen by default
                 new_pieces.W_PAWNS = board_utils.clear_bit(new_pieces.W_PAWNS, from_sq)
                 new_pieces.W_QUEENS = board_utils.set_bit(new_pieces.W_QUEENS, to_sq)
@@ -467,7 +615,7 @@ def make_move(pieces: BitboardPieces, move: tuple, game_state: dict) -> Tuple[Bi
                 new_pieces.W_PAWNS = board_utils.set_bit(new_pieces.W_PAWNS, to_sq)
                 
                 # Check for double pawn push (set en passant target)
-                if from_sq - to_sq == 16:  # Moving two squares forward
+                if to_sq - from_sq == -16:  # Moving two squares forward (NORTH = -8 * 2)
                     new_game_state['en_passant'] = from_sq - 8
                 
                 # Handle en passant capture
@@ -526,7 +674,7 @@ def make_move(pieces: BitboardPieces, move: tuple, game_state: dict) -> Tuple[Bi
             new_game_state['halfmove_clock'] = 0
             
             # Handle pawn promotion
-            if to_sq >= 56:  # Reaching the 1st rank
+            if to_sq // 8 == 7:  # Reaching the 1st rank (row index 7)
                 # Promote to queen by default
                 new_pieces.B_PAWNS = board_utils.clear_bit(new_pieces.B_PAWNS, from_sq)
                 new_pieces.B_QUEENS = board_utils.set_bit(new_pieces.B_QUEENS, to_sq)
@@ -536,7 +684,7 @@ def make_move(pieces: BitboardPieces, move: tuple, game_state: dict) -> Tuple[Bi
                 new_pieces.B_PAWNS = board_utils.set_bit(new_pieces.B_PAWNS, to_sq)
                 
                 # Check for double pawn push (set en passant target)
-                if to_sq - from_sq == 16:  # Moving two squares forward
+                if to_sq - from_sq == 16:  # Moving two squares forward (SOUTH = 8 * 2)
                     new_game_state['en_passant'] = from_sq + 8
                 
                 # Handle en passant capture
@@ -645,8 +793,12 @@ def get_piece_scores(piece_bitboard: int, piece_type: str, is_white: bool) -> Tu
         mg_score += mg_table[eval_square]
         eg_score += eg_table[eval_square]
     
-    # Negate scores for black pieces
-    return (-mg_score, -eg_score) if not is_white else (mg_score, eg_score)
+    # Negate scores for black pieces (return values from white's perspective)
+    if not is_white:
+        mg_score = -mg_score
+        eg_score = -eg_score
+    
+    return mg_score, eg_score
 
 # Initialize attack tables - call once at startup
 board_utils.initialize_attack_tables()
