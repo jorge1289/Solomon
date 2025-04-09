@@ -54,7 +54,7 @@ class TestEvaluation(unittest.TestCase):
     def test_evaluate_positions(self):
         """Test position evaluation in different game phases"""
         # Starting position
-        fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        fen = "rnbqkbnr/pppppppp /8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         pieces, _ = board_utils.parse_fen_to_bitboards(fen)
         
         # Evaluation should be near 0 in a balanced starting position

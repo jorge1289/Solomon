@@ -155,6 +155,7 @@ TOTAL_PHASE = 16 * 0 + 4 * 1 + 4 * 1 + 4 * 2 + 2 * 4  # 24
 DEFAULT_DEPTH = 3
 CHECKMATE_SCORE = 20000
 
+# Little endian rank-file (LERF) mapping
 class Square(IntEnum):
     A1, B1, C1, D1, E1, F1, G1, H1 = 0, 1, 2, 3, 4, 5, 6, 7
     A2, B2, C2, D2, E2, F2, G2, H2 = 8, 9, 10, 11, 12, 13, 14, 15
@@ -192,7 +193,7 @@ KING_ATTACKS = [0] * 64
 PAWN_ATTACKS_WHITE = [0] * 64
 PAWN_ATTACKS_BLACK = [0] * 64
 
-# Directional shifts for sliding pieces
+# Directional shifts for sliding pieces. We rely on the compass rose to identify ray-directions with following increments to neighbored squares.
 NORTH = 8
 SOUTH = -8
 EAST = 1

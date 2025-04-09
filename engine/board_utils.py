@@ -185,20 +185,24 @@ def initialize_attack_tables():
                 KING_ATTACKS[sq] = set_bit(KING_ATTACKS[sq], target_sq)
         
         # White pawn attacks (up-left and up-right)
-        if row > 0:  # Not on 8th rank
+        if row < 8:  # Not on 8th rank
             if col > 0:  # Can attack up-left
-                PAWN_ATTACKS_WHITE[sq] = set_bit(PAWN_ATTACKS_WHITE[sq], sq - 9)  # up-left (NORTH_WEST)
+                PAWN_ATTACKS_WHITE[sq] = set_bit(PAWN_ATTACKS_WHITE[sq], sq + NORTH_WEST)  # up-left (NORTH_WEST)
             if col < 7:  # Can attack up-right
-                PAWN_ATTACKS_WHITE[sq] = set_bit(PAWN_ATTACKS_WHITE[sq], sq - 7)  # up-right (NORTH_EAST)
+                PAWN_ATTACKS_WHITE[sq] = set_bit(PAWN_ATTACKS_WHITE[sq], sq + NORTH_EAST)  # up-right (NORTH_EAST)
         
         # Black pawn attacks (down-left and down-right)
-        if row < 7:  # Not on 1st rank
+        if row > 0:  # Not on 1st rank
             if col > 0:  # Can attack down-left
-                PAWN_ATTACKS_BLACK[sq] = set_bit(PAWN_ATTACKS_BLACK[sq], sq + 7)  # down-left (SOUTH_WEST)
+                PAWN_ATTACKS_BLACK[sq] = set_bit(PAWN_ATTACKS_BLACK[sq], sq + SOUTH_WEST)  # down-left (SOUTH_WEST)
             if col < 7:  # Can attack down-right
-                PAWN_ATTACKS_BLACK[sq] = set_bit(PAWN_ATTACKS_BLACK[sq], sq + 9)  # down-right (SOUTH_EAST)
+                PAWN_ATTACKS_BLACK[sq] = set_bit(PAWN_ATTACKS_BLACK[sq], sq + SOUTH_EAST)  # down-right (SOUTH_EAST)
+            #print(f"Initializing black pawn attacks for square {sq} (row {row}, col {col})")
+            #print(f"Attack (down-left): {sq - SOUTH_WEST}, Attack (down-right): {sq - SOUTH_EAST}")
+            #print(f"Black pawn attacks for {sq}: {bin(PAWN_ATTACKS_BLACK[sq])}")
 
-    print("Attack tables initialized")
+
+    #print("Attack tables initialized")  
 
 def generate_knight_moves(knights: int, own_pieces: int) -> list:
     """generate all knkight moves"""
@@ -230,7 +234,7 @@ def generate_pawn_moves(pawns: int, all_pieces: int, enemy_pieces: int, is_white
     double_forward = forward * 2
 
     # Starting rank for double-move
-    start_rank = 6 if is_white else 1  # White pawns start on rank 2 (index 6), Black pawns on rank 7 (index 1)
+    start_rank = 2 if is_white else 6  # White pawns start on rank 2 (index 2), Black pawns on rank 7 (index 7)
 
     print(f"Generating pawn moves for {'white' if is_white else 'black'}, forward={forward}, start_rank={start_rank}")
 
@@ -238,16 +242,18 @@ def generate_pawn_moves(pawns: int, all_pieces: int, enemy_pieces: int, is_white
         from_sq = lsb(piece)
         piece = clear_bit(piece, from_sq)
         row, col = from_sq // 8, from_sq % 8
-        
+
         # Single push
         to_sq = from_sq + forward
         if 0 <= to_sq < 64 and not get_bit(all_pieces, to_sq):
+            #print(f"pairs of generated pawn moves: {(from_sq, to_sq)}")
             moves.append((from_sq, to_sq))
             
             # Double push from starting rank
-            if row == start_rank:
+            if row == 1 or row == 6:
                 to_sq_double = from_sq + double_forward
                 if 0 <= to_sq_double < 64 and not get_bit(all_pieces, to_sq_double):
+                    #print(f"pairs of generated double pawn moves: {(from_sq, to_sq_double)}")
                     moves.append((from_sq, to_sq_double))
         
         # Captures

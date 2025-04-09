@@ -10,6 +10,10 @@ from engine import board_utils
 from engine.evaluation import generate_all_moves
 
 class TestMoveGeneration(unittest.TestCase):
+    def setup(self):
+        #board_utils.initialize_attack_tables() NOTE: attack tables initialized when module is loaded
+        pass
+
     def test_attack_tables_initialization(self):
         """Test that attack tables are initialized correctly"""
         # Knight attacks from center of board (d4)
@@ -54,8 +58,8 @@ class TestMoveGeneration(unittest.TestCase):
         white_pawn_moves = board_utils.generate_pawn_moves(
             pieces.W_PAWNS, pieces.ALL_PIECES, pieces.B_PIECES, True)
         
-        # Should have 16 single moves and 16 double moves
-        self.assertEqual(len(white_pawn_moves), 32)
+        # Should have 8 single moves and 8 double moves
+        self.assertEqual(len(white_pawn_moves), 16)
         
         # Check specific pawn moves
         e2_e3 = (12, 20)  # e2-e3
@@ -68,8 +72,8 @@ class TestMoveGeneration(unittest.TestCase):
         black_pawn_moves = board_utils.generate_pawn_moves(
             pieces.B_PAWNS, pieces.ALL_PIECES, pieces.W_PIECES, False)
         
-        # Should have 16 single moves and 16 double moves
-        self.assertEqual(len(black_pawn_moves), 32)
+        # Should have 8 single moves and 8 double moves
+        self.assertEqual(len(black_pawn_moves), 16)
         
         # Check specific pawn moves
         e7_e6 = (52, 44)  # e7-e6

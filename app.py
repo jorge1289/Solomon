@@ -93,6 +93,7 @@ def get_move():
             'traceback': traceback.format_exc()
         }), 500
 
+# LEGACY API: IGNORE FOR MODERN FUNCTIONALITY
 @app.route('/api/evaluate', methods=['POST'])
 def evaluate_position():
     """Endpoint for evaluating a single position."""
