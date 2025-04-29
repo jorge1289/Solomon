@@ -197,12 +197,7 @@ def initialize_attack_tables():
                 PAWN_ATTACKS_BLACK[sq] = set_bit(PAWN_ATTACKS_BLACK[sq], sq + SOUTH_WEST)  # down-left (SOUTH_WEST)
             if col < 7:  # Can attack down-right
                 PAWN_ATTACKS_BLACK[sq] = set_bit(PAWN_ATTACKS_BLACK[sq], sq + SOUTH_EAST)  # down-right (SOUTH_EAST)
-            #print(f"Initializing black pawn attacks for square {sq} (row {row}, col {col})")
-            #print(f"Attack (down-left): {sq - SOUTH_WEST}, Attack (down-right): {sq - SOUTH_EAST}")
-            #print(f"Black pawn attacks for {sq}: {bin(PAWN_ATTACKS_BLACK[sq])}")
 
-
-    #print("Attack tables initialized")  
 
 def generate_knight_moves(knights: int, own_pieces: int) -> list:
     """generate all knkight moves"""
@@ -273,7 +268,7 @@ def get_bishop_attacks(square: int, occupied: int) -> int:
     
     # Northeast ray
     r, c = row - 1, col + 1
-    while r >= 0 and c < 8:
+    while r > 0 and c < 8:
         target_sq = r * 8 + c
         attacks = set_bit(attacks, target_sq)
         if get_bit(occupied, target_sq):
@@ -283,7 +278,7 @@ def get_bishop_attacks(square: int, occupied: int) -> int:
     
     # Northwest ray
     r, c = row - 1, col - 1
-    while r >= 0 and c >= 0:
+    while r > 0 and c > 0:
         target_sq = r * 8 + c
         attacks = set_bit(attacks, target_sq)
         if get_bit(occupied, target_sq):
@@ -303,7 +298,7 @@ def get_bishop_attacks(square: int, occupied: int) -> int:
     
     # Southwest ray
     r, c = row + 1, col - 1
-    while r < 8 and c >= 0:
+    while r < 7 and c > 0:
         target_sq = r * 8 + c
         attacks = set_bit(attacks, target_sq)
         if get_bit(occupied, target_sq):
